@@ -1,0 +1,376 @@
+
+breed [comiloes comilao]
+breed [limpadores limpador]
+
+turtles-own [energy]
+limpadores-own [nLixo]
+
+globals [ResiduosDepositados celG celY celR ]
+
+to setup
+  	clear-all
+
+  ask patches with [pcolor = black]
+  [
+
+    if random 101 <= celulasAmarelas
+    [
+      set pcolor yellow
+    ]
+    if random 101 <= celulasVermelhas
+    [
+      set pcolor red
+    ]
+    if random 101 < ncomida
+    [
+      set pcolor green
+    ]
+  ]
+
+  set celR count patches with [pcolor = red]
+  set celY count patches with [pcolor = yellow]
+  set celG count patches with [pcolor = green]
+  create-comiloes NumeroComiloesInicial
+  	[
+    		set shape "face happy"
+    set color pink
+    set size 1
+    set energy 100
+    setxy random-xcor random-ycor
+  	]
+
+  create-limpadores NumeroLimpadoresInicial
+  	[
+    	set shape "truck"
+    set color orange
+    set size 1
+    set energy 100
+    setxy random-xcor random-ycor
+  	]
+
+  ask n-of NumeroLocaisDepositos patches with [pcolor = black]
+  [
+    set pcolor blue
+  ]
+
+  reset-ticks
+
+end
+
+to go
+  if count turtles = 0 or ticks = 10000
+  [
+    stop
+  ]
+  tick
+
+  death
+  regrow
+  ask comiloes [
+    Percecao_Comiloes
+    mover_comiloes
+    comiloesComem
+    set energy energy - 1
+  ]
+
+  ask limpadores [
+
+    mover_limpadores
+    Percecao_Limpadores
+    limpadores_comem
+    deitarLixo
+    guardarLixo
+    set energy energy - 1
+  ]
+
+end
+
+to mover_comiloes
+
+  ifelse random 101 < 50
+  [
+    Ahead_turtles
+  ]
+  [
+    ifelse random 101 < 50
+    [
+      Right_turtles
+    ]
+    [
+      Left_turtles
+    ]
+  ]
+
+end
+
+to mover_limpadores
+
+  ifelse random 101 < 50
+  [
+    Ahead_turtles
+  ]
+  [
+    ifelse random 101 < 50
+    [
+      Right_turtles
+    ]
+    [
+      Left_turtles
+    ]
+  ]
+
+end
+
+to Ahead_turtles
+
+  forward 1
+
+  ;
+end
+
+to Left_turtles
+
+  left 90
+
+  ;
+end
+
+to Right_turtles
+
+  rt 90
+
+
+end
+
+to comiloesComem
+
+  if [pcolor] of patch-here = green
+  [
+    set energy energy + 1
+    set pcolor black
+  ]
+
+end
+
+to limpadores_comem
+  if nLixo < capMax[
+    ifelse [pcolor] of patch-here = yellow
+    [
+      set pcolor black
+      set nLixo nLixo + 1
+    ]
+    [
+      ifelse [pcolor] of patch-here = red
+      [
+        set pcolor black
+        set nLixo nLixo + 1
+      ][]
+    ]
+  ]
+
+  if [pcolor] of patch-here = green
+  [
+    ifelse nLixo < capMax / 2
+    [
+      set energy energy + energia_configuravel
+      set pcolor black
+    ]
+    [
+      set energy energy + energia_configuravel / 2
+      set pcolor black
+    ]
+  ]
+
+
+
+end
+
+to regrow
+  while [count patches with [pcolor = yellow] < celY]
+  [
+    ask one-of patches with [pcolor = black]
+    [
+      set pcolor yellow
+    ]
+  ]
+  while [count patches with [pcolor = red] < celR]
+  [
+    ask one-of patches with [pcolor = black]
+    [
+      set pcolor red
+    ]
+  ]
+  while [count patches with [pcolor = green] < celG]
+  [
+    ask one-of patches with [pcolor = black]
+    [
+      set pcolor green
+    ]
+  ]
+
+end
+
+to deitarLixo
+
+  if [pcolor] of patch-here = blue
+  [
+    ifelse capMax = nLixo[
+      set ResiduosDepositados ResiduosDepositados + nLixo
+      set energy energy + nLixo * 10
+      set nLixo 0
+
+    ]
+    []
+  ]
+
+
+end
+
+to guardarLixo
+
+  if capMax < nLixo
+  [
+
+
+    ifelse [pcolor] of patch-here = yellow
+    [
+      set nLixo nLixo + 1
+      set pcolor black
+    ]
+    [
+      ifelse [pcolor] of patch-here = red
+      [
+        set nLixo nLixo + 2
+        set pcolor black
+      ]
+      [
+      ]
+    ]
+  ]
+
+
+end
+
+to Percecao_Comiloes
+
+  ifelse [pcolor] of patch-ahead 1 = green
+  [
+    forward 1
+  ]
+  [
+    ifelse [pcolor] of patch-right-and-ahead 90 1 = green
+    [
+      rt 90
+    ]
+    [
+      ifelse [pcolor] of patch-left-and-ahead 90 1  = green
+      [
+        lt 90
+      ]
+      [
+      ]
+    ]
+  ]
+
+  ifelse [pcolor] of patch-ahead 1 = yellow
+  [
+    rt 90
+    set energy energy - (energy * 0.05)
+  ]
+  [
+    ifelse [pcolor] of patch-right-and-ahead 90 1 = yellow
+    [
+      forward 1
+      set energy energy - (energy * 0.05)
+    ]
+    [
+      ifelse [pcolor] of patch-left-and-ahead 90 1  = yellow
+      [
+        forward 1
+        set energy energy - (energy * 0.05)
+      ]
+      [
+      ]
+    ]
+  ]
+
+  ifelse [pcolor] of patch-ahead 1 = red
+  [
+    rt 90
+    set energy energy - (energy * 0.10)
+  ]
+  [
+    ifelse [pcolor] of patch-right-and-ahead 90 1 = red
+    [
+      forward 1
+      set energy energy - (energy * 0.10)
+    ]
+    [
+      ifelse [pcolor] of patch-left-and-ahead 90 1  = red
+      [
+        forward 1
+        set energy energy - (energy * 0.10)
+      ]
+      [
+      ]
+    ]
+  ]
+
+end
+
+to Percecao_Limpadores
+  ifelse [pcolor] of patch-ahead 1 = green
+  [
+    forward 1
+  ]
+  [
+    ifelse [pcolor] of patch-right-and-ahead 90 1 = green
+    [
+      rt 90
+    ]
+    [
+    ]
+  ]
+
+
+  ifelse [pcolor] of patch-ahead 1 = yellow
+  [
+    forward 1
+  ]
+  [
+    ifelse [pcolor] of patch-right-and-ahead 90 1 = yellow
+    [
+      rt 90
+    ]
+    [
+    ]
+  ]
+
+
+  ifelse [pcolor] of patch-ahead 1 = red
+  [
+    forward 1
+  ]
+  [
+    ifelse [pcolor] of patch-right-and-ahead 90 1 = red
+    [
+      rt 90
+    ]
+    [
+    ]
+
+  ]
+
+end
+
+to death
+  ask turtles
+  [
+    if energy <= 0
+    [
+      die
+    ] ; se a energia for igual ou menor a 0, as turtles morrem
+  ]
+
+end
+
